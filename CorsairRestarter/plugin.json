@@ -1,0 +1,11 @@
+{
+	"API": "1.0",
+	"Author": "Aytackydln",
+	"Description": "Restarts Corsair plugin every hour",
+	"Guid": "421039a0-bb35-4e1b-9bd3-99220ac554f6",
+	"Main": "CorsairRestarter.dll",
+	"Name": "Corsair Restarter",
+	"Repository": "https://github.com/Aytackydln/Artemis.MediaInfo",
+	"Version": "1.0.0.0",
+	"Platforms": "Windows,Linux,OSX"
+}
