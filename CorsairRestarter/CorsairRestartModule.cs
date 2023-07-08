@@ -8,23 +8,40 @@ namespace CorsairRestarter;
 public class CorsairRestartModule : Module
 {
     private readonly IPluginManagementService _pluginManagementService;
+    private readonly PluginSetting<int> _minutesSetting;
+    private readonly PluginSetting<int> _pauseSetting;
 
     private Timer? _timer;
     private Plugin? _corsairPlugin;
 
-    public CorsairRestartModule(IPluginManagementService _pluginManagementService)
+    public CorsairRestartModule(IPluginManagementService pluginManagementService, PluginSettings settings)
     {
-        this._pluginManagementService = _pluginManagementService;
+        _pluginManagementService = pluginManagementService;
+        _minutesSetting = settings.GetSetting("Minutes", 60);
+        _pauseSetting = settings.GetSetting("Pause", 0);
     }
 
     public override void Enable()
     {
         _corsairPlugin = _pluginManagementService.GetAllPlugins()
             .Find(p => p.Guid.ToString() == "926629ab-8170-42f3-be18-22c694aa91cd");
-        if (_corsairPlugin != null)
-        {
-            _timer = new Timer(TimerCallback, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
-        }
+        if (_corsairPlugin == null) return;
+
+        SetTimer();
+        _minutesSetting.SettingChanged += OnSettingChanged;
+        _pauseSetting.SettingChanged += OnSettingChanged;
+    }
+
+    private void OnSettingChanged(object? sender, EventArgs e)
+    {
+        _timer?.Dispose();
+        SetTimer();
+    }
+
+    private void SetTimer()
+    {
+        var period = TimeSpan.FromMinutes(_minutesSetting.Value);
+        _timer = new Timer(TimerCallback, null, period, period);
     }
 
     private void TimerCallback(object? state)
@@ -33,7 +50,9 @@ public class CorsairRestartModule : Module
         {
             return;
         }
+
         _pluginManagementService.DisablePlugin(_corsairPlugin, false);
+        Thread.Sleep(TimeSpan.FromSeconds(_pauseSetting.Value));
         _pluginManagementService.EnablePlugin(_corsairPlugin, false);
     }
 
@@ -47,5 +66,5 @@ public class CorsairRestartModule : Module
     {
     }
 
-    public override List<IModuleActivationRequirement>? ActivationRequirements { get; }
+    public override List<IModuleActivationRequirement>? ActivationRequirements => null;
 }
